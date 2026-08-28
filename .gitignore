@@ -1,21 +1,80 @@
-# Confidential Documentation & Internal Planning
+# ============================================================
+# Confidential Documentation & Internal Planning Markdown Files
+# ============================================================
 ecell-pitch-registration-documentation.md
 project-development-phases.md
 ecell-pitch-registration-interview-suggestions.md
 v2.md
 
-# Dependencies & Build Output
-node_modules/
-dist/
-dist-ssr/
-*.local
-
-# Environment Variables & Secrets
+# ============================================================
+# Environment Variables, Secrets & Cloud Service Accounts
+# ============================================================
 .env
 .env.*
-!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+client/.env
+client/.env.local
+client/.env.*
+server/.env
+server/.env.local
+server/.env.*
+*.local
+*.pem
+*.key
+*.p12
+*.cert
+*service-account*.json
+*credentials*.json
+*secret*.json
 
+# Whitelist safe public template files
+!.env.example
+!client/.env.example
+!server/.env.example
+
+# ============================================================
+# Dependencies & Package Managers
+# ============================================================
+node_modules/
+client/node_modules/
+server/node_modules/
+.pnp
+.pnp.js
+
+# ============================================================
+# Build & Distribution Artifacts
+# ============================================================
+dist/
+dist-ssr/
+client/dist/
+server/dist/
+*.tsbuildinfo
+build/
+out/
+
+# ============================================================
+# Firebase & Google Cloud Emulator State
+# ============================================================
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+pubsub-debug.log*
+database-debug.log*
+
+# ============================================================
+# Testing & Code Coverage
+# ============================================================
+coverage/
+.nyc_output/
+*.lcov
+
+# ============================================================
 # Logs & Debugging
+# ============================================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -23,7 +82,9 @@ pnpm-debug.log*
 lerna-debug.log*
 *.log
 
+# ============================================================
 # Editor & OS Artifacts
+# ============================================================
 .vscode/*
 !.vscode/extensions.json
 .idea/

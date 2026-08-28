@@ -24,6 +24,7 @@ export interface OutboxEvent {
   type: 'TEAM_REGISTERED';
   payload: RegisteredTeamRecord;
   createdAt: string;
+  expireAt?: string;
   processed: boolean;
   attempts: number;
   lastError?: string;
@@ -294,6 +295,7 @@ class DataStore {
       type: 'TEAM_REGISTERED',
       payload: newRecord,
       createdAt: now,
+      expireAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       processed: false,
       attempts: 0,
     };

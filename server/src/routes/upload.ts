@@ -1,17 +1,19 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+import { storageService } from '../services/storageService.js';
 
 export const uploadRouter = Router();
 
 /**
  * POST /api/upload/presign
- * Issues restricted presigned direct-to-cloud upload URLs:
+ * Issues restricted V4 presigned direct-to-cloud upload URLs with:
  * - Content-Type strictly locked to application/pdf
  * - File size bounded strictly: 1KB <= size <= 15MB
  * - Short 90-second URL TTL expiration
+ * - Explicit requiredHeaders contract preventing 403 SignatureDoesNotMatch errors
  */
-uploadRouter.post('/presign', (req: Request, res: Response): void => {
-  const { fileName, fileSize, contentType } = req.body;
+uploadRouter.post('/presign', async (req: Request, res: Response): Promise<void> => {
+  const { fileName, fileSize, contentType, referenceId } = req.body;
 
   if (!fileName || !fileSize) {
     res.status(400).json({
@@ -46,19 +48,12 @@ uploadRouter.post('/presign', (req: Request, res: Response): void => {
     return;
   }
 
-  const safeFileKey = `pitch-decks/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.pdf`;
-  const presignedUrl = `https://storage.googleapis.com/ecell-pitch-decks-2026/${safeFileKey}`;
-  const publicUrl = `https://storage.googleapis.com/ecell-pitch-decks-2026/${safeFileKey}`;
-
-  res.json({
-    success: true,
-    presignedUrl,
-    publicUrl,
-    fileKey: safeFileKey,
-    expiresInSeconds: 90,
-    policy: {
-      'Content-Type': 'application/pdf',
-      'content-length-range': [1024, maxBytes],
-    },
+  const result = await storageService.generatePresignedUploadUrl({
+    fileName,
+    fileSize,
+    contentType,
+    referenceId,
   });
+
+  res.json(result);
 });
