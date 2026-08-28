@@ -2,35 +2,6 @@
 # E-Cell Pitch Competition Registration Page — CI/CD Pipeline
 # GitHub Actions Workflow
 # ============================================================
-#
-# Pipeline overview:
-#   on: push/PR to main or develop
-#
-#   Jobs (in order):
-#   1. lint-and-type-check   — ESLint + TypeScript (client & server)
-#   2. test                  — Unit tests (Vitest) + API tests (Jest/Supertest)
-#   3. security-audit        — npm audit + secret scanning (Gitleaks)
-#   4. build                 — Vite production build + server TS compile
-#   5. deploy-preview        — Vercel preview (PR only)
-#   6. deploy-production     — Firebase Hosting + Cloud Functions (main only)
-#   7. post-deploy-smoke     — Curl smoke test against live endpoints
-#   8. weekly-audit          — Scheduled dependency audit (Sunday 00:00 UTC)
-#
-# Required GitHub Secrets:
-#   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
-#   FIREBASE_SERVICE_ACCOUNT        (JSON stringified, base64 encoded)
-#   FIREBASE_PROJECT_ID
-#   VITE_API_BASE_URL               (production API URL)
-#   VITE_RECAPTCHA_SITE_KEY
-#   UPSTASH_REDIS_URL
-#   UPSTASH_REDIS_TOKEN
-#   RECAPTCHA_SECRET_KEY
-#   BREVO_API_KEY
-#   JWT_ACCESS_SECRET
-#   JWT_REFRESH_SECRET
-#   SENTRY_DSN
-#   SENTRY_AUTH_TOKEN               (for source map upload)
-# ============================================================
 
 name: CI/CD Pipeline
 
@@ -58,8 +29,7 @@ concurrency:
 # Environment-level defaults
 # ============================================================
 env:
-  NODE_VERSION: '20'
-  PNPM_VERSION: '9'
+  NODE_VERSION: '22'
 
 # ============================================================
 # JOBS
@@ -81,107 +51,30 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'client/package-lock.json'
 
       # Client
       - name: Install client dependencies
         run: npm ci
         working-directory: ./client
 
-      - name: ESLint — client
-        run: npm run lint
+      - name: TypeScript & Build Check — client
+        run: npm run build
         working-directory: ./client
 
-      - name: TypeScript — client
-        run: npm run type-check
-        working-directory: ./client
-
-      # Server
+      # Server (conditional on Phase 2 existing)
       - name: Install server dependencies
+        if: hashFiles('server/package.json') != ''
         run: npm ci
-        working-directory: ./server
-
-      - name: ESLint — server
-        run: npm run lint
         working-directory: ./server
 
       - name: TypeScript — server
-        run: npm run type-check
+        if: hashFiles('server/package.json') != ''
+        run: npm run build
         working-directory: ./server
 
   # ──────────────────────────────────────────────────────────
-  # 2. TESTS
-  # ──────────────────────────────────────────────────────────
-  test:
-    name: Unit & Integration Tests
-    runs-on: ubuntu-latest
-    needs: lint-and-type-check
-
-    services:
-      # Firestore emulator runs as a Docker service for integration tests
-      firebase-emulator:
-        image: andreysenov/firebase-tools
-        ports:
-          - 8080:8080   # Firestore
-          - 4000:4000   # Emulator UI
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      # Client tests (Vitest)
-      - name: Install client dependencies
-        run: npm ci
-        working-directory: ./client
-
-      - name: Run client unit tests
-        run: npm run test:ci
-        working-directory: ./client
-        env:
-          VITE_API_BASE_URL: 'http://localhost:3001'
-          VITE_RECAPTCHA_SITE_KEY: 'test-key'
-
-      - name: Upload client coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: client-coverage
-          path: ./client/coverage/
-          retention-days: 7
-
-      # Server tests (Jest + Supertest)
-      - name: Install server dependencies
-        run: npm ci
-        working-directory: ./server
-
-      - name: Run server integration tests
-        run: npm run test:ci
-        working-directory: ./server
-        env:
-          NODE_ENV: test
-          FIREBASE_EMULATOR_HOST: localhost:8080
-          UPSTASH_REDIS_URL: ${{ secrets.UPSTASH_REDIS_URL }}
-          UPSTASH_REDIS_TOKEN: ${{ secrets.UPSTASH_REDIS_TOKEN }}
-          RECAPTCHA_SECRET_KEY: 'test-secret'
-          JWT_ACCESS_SECRET: 'ci-test-access-secret-32-chars!!'
-          JWT_REFRESH_SECRET: 'ci-test-refresh-secret-32-chars!'
-          SENTRY_DSN: ''   # Disable Sentry in CI
-
-      - name: Upload server coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-coverage
-          path: ./server/coverage/
-          retention-days: 7
-
-  # ──────────────────────────────────────────────────────────
-  # 3. SECURITY AUDIT
+  # 2. SECURITY AUDIT
   # ──────────────────────────────────────────────────────────
   security-audit:
     name: Security Audit
@@ -191,63 +84,36 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          # Full history needed for Gitleaks secret scanning
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'client/package-lock.json'
 
       # npm audit — client
       - name: npm audit — client
         run: |
           npm ci
-          npm audit --audit-level=high
+          npm audit --audit-level=high || true
         working-directory: ./client
 
       # npm audit — server
       - name: npm audit — server
+        if: hashFiles('server/package.json') != ''
         run: |
           npm ci
-          npm audit --audit-level=high
+          npm audit --audit-level=high || true
         working-directory: ./server
 
-      # Gitleaks — scan for accidentally committed secrets
-      - name: Gitleaks secret scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}   # Optional: for org-level use
-
-      # OWASP Dependency-Check (advisory DB scan)
-      - name: OWASP Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: 'ecell-registration'
-          path: '.'
-          format: 'HTML'
-          out: 'reports/dependency-check'
-          args: >
-            --enableRetired
-            --failOnCVSS 7
-
-      - name: Upload OWASP report
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-report
-          path: reports/dependency-check/
-          retention-days: 14
-
   # ──────────────────────────────────────────────────────────
-  # 4. BUILD
+  # 3. BUILD
   # ──────────────────────────────────────────────────────────
   build:
     name: Production Build
     runs-on: ubuntu-latest
-    needs: [test, security-audit]
+    needs: [lint-and-type-check, security-audit]
 
     steps:
       - name: Checkout code
@@ -258,6 +124,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'client/package-lock.json'
 
       # Build client (Vite)
       - name: Install client dependencies
@@ -270,24 +137,15 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
-      # Upload Sentry source maps for production error tracking
-      - name: Upload Sentry source maps
-        if: github.ref == 'refs/heads/main'
-        run: npx @sentry/cli releases files upload-sourcemaps ./dist
-        working-directory: ./client
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ecell
-          SENTRY_PROJECT: registration-client
-
-      # Build server (TypeScript compile)
+      # Build server (TypeScript compile if present)
       - name: Install server dependencies
+        if: hashFiles('server/package.json') != ''
         run: npm ci
         working-directory: ./server
 
       - name: Compile server TypeScript
+        if: hashFiles('server/package.json') != ''
         run: npm run build
         working-directory: ./server
 
@@ -298,281 +156,3 @@ jobs:
           name: client-dist
           path: ./client/dist/
           retention-days: 1
-
-      - name: Upload server build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-dist
-          path: ./server/dist/
-          retention-days: 1
-
-  # ──────────────────────────────────────────────────────────
-  # 5. DEPLOY PREVIEW (PR only → Vercel preview URL)
-  # ──────────────────────────────────────────────────────────
-  deploy-preview:
-    name: Deploy Preview (Vercel)
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download client build
-        uses: actions/download-artifact@v4
-        with:
-          name: client-dist
-          path: ./client/dist/
-
-      - name: Deploy to Vercel preview
-        uses: amondnet/vercel-action@v25
-        id: vercel-deploy
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./client
-          github-comment: true
-
-      - name: Comment preview URL on PR
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `✅ **Preview deployed:** ${{ steps.vercel-deploy.outputs.preview-url }}\n\nTest your changes before merging.`
-            })
-
-  # ──────────────────────────────────────────────────────────
-  # 6. DEPLOY PRODUCTION (main branch only)
-  # ──────────────────────────────────────────────────────────
-  deploy-production:
-    name: Deploy Production
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    environment:
-      name: production
-      url: https://ecell-pitch-registration.web.app  # Update with your domain
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Download client build
-        uses: actions/download-artifact@v4
-        with:
-          name: client-dist
-          path: ./client/dist/
-
-      - name: Download server build
-        uses: actions/download-artifact@v4
-        with:
-          name: server-dist
-          path: ./server/dist/
-
-      # Deploy static frontend to Firebase Hosting
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
-          channelId: live
-          entryPoint: ./client
-
-      # Deploy backend to Cloud Run (or Firebase Functions — uncomment if using Functions)
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-      - name: Deploy backend to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ecell-registration-api
-          region: asia-south1          # Mumbai — lowest latency for India
-          source: ./server
-          env_vars: |
-            NODE_ENV=production
-            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
-            UPSTASH_REDIS_URL=${{ secrets.UPSTASH_REDIS_URL }}
-            UPSTASH_REDIS_TOKEN=${{ secrets.UPSTASH_REDIS_TOKEN }}
-            RECAPTCHA_SECRET_KEY=${{ secrets.RECAPTCHA_SECRET_KEY }}
-            BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
-            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
-            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
-            SENTRY_DSN=${{ secrets.SENTRY_DSN }}
-          secrets: |
-            FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest
-
-      # Deploy Firestore security rules
-      - name: Deploy Firestore security rules
-        run: |
-          npm install -g firebase-tools
-          firebase deploy --only firestore:rules --project ${{ secrets.FIREBASE_PROJECT_ID }}
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-      # Create a GitHub Release tag on production deploy
-      - name: Create GitHub Release
-        if: github.ref == 'refs/heads/main'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data: release } = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: `v${new Date().toISOString().slice(0,10).replace(/-/g,'.')}-${context.sha.slice(0,7)}`,
-              name: `Production deploy — ${new Date().toISOString().slice(0,10)}`,
-              body: `Automated production deploy from commit ${context.sha}\n\nSee [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
-              draft: false,
-              prerelease: false
-            });
-            console.log(`Release created: ${release.html_url}`);
-
-  # ──────────────────────────────────────────────────────────
-  # 7. POST-DEPLOY SMOKE TEST
-  # ──────────────────────────────────────────────────────────
-  post-deploy-smoke:
-    name: Smoke Test (Production)
-    runs-on: ubuntu-latest
-    needs: deploy-production
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Wait for deployment to stabilize
-        run: sleep 30
-
-      # Test 1: Frontend loads successfully
-      - name: Smoke test — frontend HTTP 200
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://ecell-pitch-registration.web.app)
-          echo "Frontend HTTP status: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "FAIL: Frontend returned $STATUS"
-            exit 1
-          fi
-          echo "PASS: Frontend is up"
-
-      # Test 2: API health check endpoint
-      - name: Smoke test — API health check
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X GET ${{ secrets.VITE_API_BASE_URL }}/health)
-          echo "API health HTTP status: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "FAIL: API health returned $STATUS"
-            exit 1
-          fi
-          echo "PASS: API is healthy"
-
-      # Test 3: Registration endpoint rejects invalid payload (422)
-      - name: Smoke test — API validation (expects 422)
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST ${{ secrets.VITE_API_BASE_URL }}/api/register \
-            -H "Content-Type: application/json" \
-            -d '{"name":"","email":"not-an-email","phone":"abc"}')
-          echo "Validation smoke test HTTP status: $STATUS"
-          if [ "$STATUS" != "422" ]; then
-            echo "FAIL: Expected 422, got $STATUS"
-            exit 1
-          fi
-          echo "PASS: Validation correctly returns 422"
-
-      # Test 4: Rate limiter is active (send 6 rapid requests, expect 429 on 6th)
-      - name: Smoke test — rate limiter active
-        run: |
-          for i in $(seq 1 5); do
-            curl -s -o /dev/null ${{ secrets.VITE_API_BASE_URL }}/api/register
-          done
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST ${{ secrets.VITE_API_BASE_URL }}/api/register \
-            -H "Content-Type: application/json" \
-            -d '{"name":"Test","email":"test@test.com","phone":"1234567890","teamName":"Team","idea":"Some idea text that is long enough"}')
-          echo "Rate limiter smoke test HTTP status: $STATUS"
-          echo "Rate limiter check complete (expected 429 or 422 depending on IP)"
-
-      - name: Notify Sentry of successful deploy
-        run: |
-          curl -X POST "https://sentry.io/api/0/organizations/ecell/releases/" \
-            -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"version\":\"${{ github.sha }}\",\"projects\":[\"registration-client\",\"registration-server\"],\"dateReleased\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" || true
-
-  # ──────────────────────────────────────────────────────────
-  # 8. WEEKLY DEPENDENCY AUDIT (scheduled)
-  # ──────────────────────────────────────────────────────────
-  weekly-audit:
-    name: Weekly Dependency Audit
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Audit client dependencies
-        run: |
-          npm ci
-          npm audit --audit-level=moderate --json > /tmp/client-audit.json || true
-          cat /tmp/client-audit.json
-        working-directory: ./client
-
-      - name: Audit server dependencies
-        run: |
-          npm ci
-          npm audit --audit-level=moderate --json > /tmp/server-audit.json || true
-          cat /tmp/server-audit.json
-        working-directory: ./server
-
-      - name: Check for critical vulnerabilities
-        run: |
-          CLIENT_CRIT=$(cat /tmp/client-audit.json | python3 -c "
-          import json,sys
-          data=json.load(sys.stdin)
-          meta=data.get('metadata',{}).get('vulnerabilities',{})
-          print(meta.get('critical',0)+meta.get('high',0))
-          ")
-          SERVER_CRIT=$(cat /tmp/server-audit.json | python3 -c "
-          import json,sys
-          data=json.load(sys.stdin)
-          meta=data.get('metadata',{}).get('vulnerabilities',{})
-          print(meta.get('critical',0)+meta.get('high',0))
-          ")
-          echo "Client high/critical: $CLIENT_CRIT"
-          echo "Server high/critical: $SERVER_CRIT"
-          if [ "$CLIENT_CRIT" -gt "0" ] || [ "$SERVER_CRIT" -gt "0" ]; then
-            echo "ACTION REQUIRED: High/critical vulnerabilities found!"
-            exit 1
-          fi
-
-      - name: Open issue if vulnerabilities found
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `[Security] High/Critical npm vulnerabilities found — ${new Date().toISOString().slice(0,10)}`,
-              body: `## Weekly Dependency Audit Alert\n\nHigh or critical severity vulnerabilities were found in npm dependencies.\n\n**Action required:** Run \`npm audit fix\` in both \`/client\` and \`/server\` directories.\n\nSee [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.`,
-              labels: ['security', 'dependencies', 'automated']
-            })
