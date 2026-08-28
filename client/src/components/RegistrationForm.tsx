@@ -266,9 +266,16 @@ export function RegistrationForm({
       let isSuccess = false;
 
       try {
+        const idempotencyKey = typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `idemp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
         const response = await fetch(`${API_URL}/api/register`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey,
+          },
           body: JSON.stringify(completeRecord),
         });
 
