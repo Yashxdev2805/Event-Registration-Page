@@ -46,10 +46,13 @@ export function FlipPortalModal({
   };
 
   // Collect all registered emails & phones (leaders + members) for duplicate prevention
-  const { registeredEmails, registeredPhones } = useMemo(() => {
+  const { registeredEmails, registeredPhones } = useMemo<{
+    registeredEmails: Set<string>;
+    registeredPhones: Set<string>;
+  }>(() => {
     const emails = new Set<string>();
     const phones = new Set<string>();
-    const cleanPhone = (p?: string) => p ? p.replace(/\D/g, '').slice(-10) : '';
+    const cleanPhone = (p?: string) => (p ? p.replace(/\D/g, '').slice(-10) : '');
 
     for (const team of teams) {
       if (team.leaderEmail) emails.add(team.leaderEmail.toLowerCase());
@@ -67,7 +70,7 @@ export function FlipPortalModal({
         }
       }
     }
-    return { registeredEmails, registeredPhones };
+    return { registeredEmails: emails, registeredPhones: phones };
   }, [teams]);
 
   const isFlipped = activeTab === 'dashboard';
