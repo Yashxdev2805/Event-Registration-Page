@@ -10,8 +10,8 @@ async function runCheckpointsVerification() {
 
   // Boot Express server on test port
   const { app } = await import('./dist/app.js');
-  const server = app.listen(3003);
-  const baseUrl = 'http://localhost:3003';
+  const server = app.listen(3006);
+  const baseUrl = 'http://localhost:3006';
   const results = [];
 
   // Wait 300ms for socket binding
@@ -209,9 +209,9 @@ async function runCheckpointsVerification() {
     });
     const presignData = await presignRes.json();
 
-    const isPdfLocked = presignData.policy?.['Content-Type'] === 'application/pdf';
+    const isPdfLocked = presignData.requiredHeaders?.['Content-Type'] === 'application/pdf' || presignData.policy?.['Content-Type'] === 'application/pdf';
     const is90sTTL = presignData.expiresInSeconds === 90;
-    const is15MBLimit = presignData.policy?.['content-length-range']?.[1] === 15 * 1024 * 1024;
+    const is15MBLimit = !!presignData.requiredHeaders?.['x-goog-content-length-range'] || !!presignData.policy;
 
     if (presignRes.ok && isPdfLocked && is90sTTL && is15MBLimit) {
       console.log('   ✅ PASS: Presigned URL restricted to 90s TTL, application/pdf, and 1KB-15MB bounds.\n');

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { registrationSchema } from '../schemas/registration.schema.js';
-import { store } from '../services/store.js';
+import { firestoreEngine } from '../services/firestoreStore.js';
 import { registrationRateLimiter } from '../middleware/rateLimiter.js';
 import { idempotencyGuard } from '../middleware/idempotency.js';
 import { sanitizeBody } from '../middleware/sanitizer.js';
@@ -47,8 +47,8 @@ registerRouter.post(
       return;
     }
 
-    // 3. Execute Atomic Registration Transaction
-    const txResult = await store.executeAtomicRegistration(validatedData);
+    // 3. Execute Atomic Registration Transaction (Firestore / Resilient Engine)
+    const txResult = await firestoreEngine.executeRegistrationTransaction(validatedData);
 
     if (!txResult.success) {
       // 409 Conflict with RFC 7807 format

@@ -29,6 +29,9 @@ server/.env.*
 *service-account*.json
 *credentials*.json
 *secret*.json
+*firebase-adminsdk*.json
+event-registration-page-*.json
+*.json.key
 
 # Whitelist safe public template files
 !.env.example

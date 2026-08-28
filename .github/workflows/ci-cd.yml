@@ -1,6 +1,6 @@
 # ============================================================
 # E-Cell Pitch Competition Registration Page — CI/CD Pipeline
-# GitHub Actions Workflow
+# GitHub Actions Workflow (Phases 1-4 Automated Verification)
 # ============================================================
 
 name: CI/CD Pipeline
@@ -18,24 +18,16 @@ on:
     # Weekly dependency audit — every Sunday at 00:00 UTC
     - cron: '0 0 * * 0'
   workflow_dispatch:
-    # Allow manual trigger from the GitHub Actions UI
 
 # Cancel any in-progress run for the same branch/PR to avoid queue pile-up
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# ============================================================
-# Environment-level defaults
-# ============================================================
 env:
   NODE_VERSION: '22'
 
-# ============================================================
-# JOBS
-# ============================================================
 jobs:
-
   # ──────────────────────────────────────────────────────────
   # 1. LINT & TYPE CHECK
   # ──────────────────────────────────────────────────────────
@@ -62,22 +54,22 @@ jobs:
         run: npm run build
         working-directory: ./client
 
-      # Server (conditional on Phase 2 existing)
+      # Server
       - name: Install server dependencies
         if: hashFiles('server/package.json') != ''
         run: npm ci
         working-directory: ./server
 
-      - name: TypeScript — server
+      - name: TypeScript & Build Check — server
         if: hashFiles('server/package.json') != ''
         run: npm run build
         working-directory: ./server
 
   # ──────────────────────────────────────────────────────────
-  # 2. SECURITY AUDIT
+  # 2. SECURITY & DEPENDENCY AUDIT (SCA)
   # ──────────────────────────────────────────────────────────
   security-audit:
-    name: Security Audit
+    name: Security & Vulnerability Audit
     runs-on: ubuntu-latest
     needs: lint-and-type-check
 
@@ -92,14 +84,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'client/package-lock.json'
 
-      # npm audit — client
       - name: npm audit — client
         run: |
           npm ci
           npm audit --audit-level=high || true
         working-directory: ./client
 
-      # npm audit — server
       - name: npm audit — server
         if: hashFiles('server/package.json') != ''
         run: |
@@ -108,12 +98,51 @@ jobs:
         working-directory: ./server
 
   # ──────────────────────────────────────────────────────────
-  # 3. BUILD
+  # 3. AUTOMATED INTEGRATION TEST SUITES (Phases 2, 3 & 4)
+  # ──────────────────────────────────────────────────────────
+  test-suites:
+    name: Integration Verification Suites
+    runs-on: ubuntu-latest
+    needs: lint-and-type-check
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'server/package-lock.json'
+
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: ./server
+
+      - name: Build server
+        run: npm run build
+        working-directory: ./server
+
+      - name: Run Phase 2 (10 Lifecycle Checkpoints)
+        run: node test-10-checkpoints.js
+        working-directory: ./server
+
+      - name: Run Phase 3 (Firestore & Concurrency)
+        run: node test-phase3-firestore.js
+        working-directory: ./server
+
+      - name: Run Phase 4 (AppSec & Magic-Byte Scanner)
+        run: node test-phase4-security.js
+        working-directory: ./server
+
+  # ──────────────────────────────────────────────────────────
+  # 4. PRODUCTION BUILD
   # ──────────────────────────────────────────────────────────
   build:
     name: Production Build
     runs-on: ubuntu-latest
-    needs: [lint-and-type-check, security-audit]
+    needs: [lint-and-type-check, security-audit, test-suites]
 
     steps:
       - name: Checkout code
@@ -138,7 +167,7 @@ jobs:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
 
-      # Build server (TypeScript compile if present)
+      # Build server
       - name: Install server dependencies
         if: hashFiles('server/package.json') != ''
         run: npm ci
@@ -149,7 +178,7 @@ jobs:
         run: npm run build
         working-directory: ./server
 
-      # Cache artifacts for deploy jobs
+      # Cache artifacts
       - name: Upload client build artifact
         uses: actions/upload-artifact@v4
         with:
