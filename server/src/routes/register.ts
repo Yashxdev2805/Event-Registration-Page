@@ -2,6 +2,8 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { registrationSchema } from '../schemas/registration.schema.js';
 import { firestoreEngine } from '../services/firestoreStore.js';
+import { emailService } from '../services/emailService.js';
+import { sheetsService } from '../services/sheetsService.js';
 import { registrationRateLimiter } from '../middleware/rateLimiter.js';
 import { idempotencyGuard } from '../middleware/idempotency.js';
 import { sanitizeBody } from '../middleware/sanitizer.js';
@@ -65,7 +67,23 @@ registerRouter.post(
 
     const team = txResult.data!;
 
-    // 4. Return 201 Created with Reference ID and docket summary
+    // 4. Background Outbox Dispatch: Brevo Confirmation Email & Google Sheets Sync
+    emailService
+      .sendConfirmationEmail({
+        toEmail: team.leaderEmail,
+        toName: team.leaderName,
+        referenceId: team.id,
+        teamName: team.teamName,
+        trackLabel: team.trackLabel,
+        teamSize: team.teamSize,
+      })
+      .catch((err) => console.error('Background email error:', err));
+
+    sheetsService
+      .syncTeamsBatch([team])
+      .catch((err) => console.error('Background sheets sync error:', err));
+
+    // 5. Return 201 Created with Reference ID and docket summary
     res.status(201).json({
       success: true,
       message: 'Startup registered successfully for E-CELL UIET KUK Pitch Arena 2026.',
