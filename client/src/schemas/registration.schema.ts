@@ -118,6 +118,14 @@ export const TRACK_OPTIONS: readonly TrackDetail[] = [
   },
 ] as const;
 
+// O(1) Constant-Time Lookup Map for Track Metadata
+export const TRACK_MAP: Readonly<Record<string, TrackDetail>> = Object.freeze(
+  TRACK_OPTIONS.reduce((acc, track) => {
+    acc[track.id] = track;
+    return acc;
+  }, {} as Record<string, TrackDetail>)
+);
+
 // Schema for Team Member
 const memberSchema = z.object({
   name: z.string().optional().or(z.literal('')),

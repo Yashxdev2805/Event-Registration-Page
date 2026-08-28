@@ -15,13 +15,13 @@ import {
   ArrowRight,
   UserPlus,
 } from 'lucide-react';
-import {
-  registrationSchema,
-  TRACK_OPTIONS,
-  type RegistrationFormData,
-} from '../schemas/registration.schema';
+import { TRACK_OPTIONS, TRACK_MAP, registrationSchema } from '../schemas/registration.schema';
+import type { RegistrationFormData } from '../schemas/registration.schema';
 import { FormField } from './FormField';
 import { SuccessBanner } from './SuccessBanner';
+
+// Module-level phone sanitizer — compiled once in memory
+const cleanPhoneNumber = (p?: string): string => (p ? p.replace(/\D/g, '').slice(-10) : '');
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -100,24 +100,26 @@ export function RegistrationForm({
 
   const memberCount = parseInt(currentTeamSize, 10);
 
-  // V2: Auto-save draft to localStorage (debounced 500ms)
-  const allValues = watch();
+  // V2: Subscription-based debounced draft auto-save — 0 React re-renders on keystrokes
   useEffect(() => {
-    if (submitState === 'success') return; // don't save after successful submit
-    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
-    draftTimerRef.current = setTimeout(() => {
-      try {
-        const { website, ...safeValues } = allValues; // exclude honeypot
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(safeValues));
-        // Show brief "Draft saved" indicator
-        setDraftSaved(true);
-        setTimeout(() => setDraftSaved(false), 2000);
-      } catch { /* quota exceeded — silently skip */ }
-    }, 500);
+    const subscription = watch((values) => {
+      if (submitState === 'success') return;
+      if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+      draftTimerRef.current = setTimeout(() => {
+        try {
+          const { website, ...safeValues } = values;
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(safeValues));
+          setDraftSaved(true);
+          setTimeout(() => setDraftSaved(false), 2000);
+        } catch { /* storage full / private mode */ }
+      }, 500);
+    });
+
     return () => {
+      subscription.unsubscribe();
       if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     };
-  }, [allValues, submitState]);
+  }, [watch, submitState]);
 
   const clearDraft = useCallback(() => {
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
@@ -130,12 +132,12 @@ export function RegistrationForm({
     }
   }, [selectedTrack, setValue]);
 
-  const handleTrackClick = (trackId: string) => {
+  const handleTrackClick = useCallback((trackId: string) => {
     setValue('track', trackId, { shouldValidate: true, shouldDirty: true });
     if (onTrackChange) {
       onTrackChange(trackId);
     }
-  };
+  }, [setValue, onTrackChange]);
 
   const onSubmit = async (data: RegistrationFormData) => {
     if (data.website && data.website.length > 0) return; // Honeypot check
@@ -146,8 +148,7 @@ export function RegistrationForm({
 
     // ── Email & Phone uniqueness check (leader) ──
     const leaderEmail = data.email.trim().toLowerCase();
-    const cleanPhone = (p?: string) => (p ? p.replace(/\D/g, '').slice(-10) : '');
-    const leaderPhone = cleanPhone(data.phone);
+    const leaderPhone = cleanPhoneNumber(data.phone);
 
     if (registeredEmails.has(leaderEmail)) {
       setError('email', {
@@ -188,7 +189,7 @@ export function RegistrationForm({
       }
 
       const memberEmail = member.email.trim().toLowerCase();
-      const memberPhone = cleanPhone(member.phone);
+      const memberPhone = cleanPhoneNumber(member.phone);
 
       // Check against previously registered emails
       if (registeredEmails.has(memberEmail)) {
@@ -320,7 +321,7 @@ export function RegistrationForm({
   };
 
   if (submitState === 'success' && submittedData) {
-    const selectedTrackObj = TRACK_OPTIONS.find((t) => t.id === submittedData.track);
+    const selectedTrackObj = TRACK_MAP[submittedData.track];
     return (
       <SuccessBanner
         name={submittedData.name}

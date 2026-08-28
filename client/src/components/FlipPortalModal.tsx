@@ -6,11 +6,12 @@ import {
 } from 'lucide-react';
 import { RegistrationForm } from './RegistrationForm';
 import { TeamDashboardTable, INITIAL_TEAMS_DATA, type RegisteredTeamRecord } from './TeamDashboardTable';
-import { TRACK_OPTIONS, type RegistrationFormData } from '../schemas/registration.schema';
+import { TRACK_MAP } from '../schemas/registration.schema';
+import type { RegistrationFormData } from '../schemas/registration.schema';
 
 interface FlipPortalModalProps {
-  selectedTrack?: string;
-  onTrackChange?: (track: string) => void;
+  selectedTrack: string;
+  onTrackChange: (track: string) => void;
   activeTab: 'register' | 'dashboard';
   setActiveTab: (tab: 'register' | 'dashboard') => void;
 }
@@ -23,9 +24,9 @@ export function FlipPortalModal({
 }: FlipPortalModalProps) {
   const [teams, setTeams] = useState<RegisteredTeamRecord[]>(INITIAL_TEAMS_DATA);
 
-  // When a team successfully registers through the form, add it to the live table
+  // When a team successfully registers through the form, add it to the live table in O(1)
   const handleRegistrationComplete = (formData: RegistrationFormData) => {
-    const trackObj = TRACK_OPTIONS.find((t) => t.id === formData.track);
+    const trackObj = TRACK_MAP[formData.track];
     const newTeam: RegisteredTeamRecord = {
       id: `EC26-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
       teamName: formData.teamName,

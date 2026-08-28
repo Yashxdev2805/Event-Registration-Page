@@ -1,50 +1,53 @@
+import { memo } from 'react';
 import { Trophy, Award, Building2, Cloud, Users, Sparkles } from 'lucide-react';
 
-export function PrizesSection() {
-  const prizes = [
-    {
-      place: '1ST PRIZE',
-      badge: 'Winner',
-      amount: '₹50,000',
-      subtitle: 'Direct Cash Grant',
-      badgeStyle: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-      borderStyle: 'border-amber-500/40 hover:border-amber-400',
-      perks: [
-        'Direct Entry to Angel Investor Demo Day',
-        '₹5,00,000 AWS & Cloud Credits',
-        '3 Months Incubation Support',
-        '1-on-1 VC Mentorship Sessions',
-      ],
-    },
-    {
-      place: '2ND PRIZE',
-      badge: '1st Runner Up',
-      amount: '₹30,000',
-      subtitle: 'Direct Cash Grant',
-      badgeStyle: 'bg-slate-300/20 text-slate-200 border border-slate-300/30',
-      borderStyle: 'border-slate-500/40 hover:border-slate-400',
-      perks: [
-        'VC Office Hours & Pitch Audit',
-        '₹2,50,000 Cloud & Tool Credits',
-        'Co-Working Space Pass (1 Month)',
-        'E-Cell Growth Network Access',
-      ],
-    },
-    {
-      place: '3RD PRIZE',
-      badge: '2nd Runner Up',
-      amount: '₹20,000',
-      subtitle: 'Direct Cash Grant',
-      badgeStyle: 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
-      borderStyle: 'border-orange-500/40 hover:border-orange-400',
-      perks: [
-        'Founder Strategy & Go-To-Market Session',
-        '₹1,00,000 Dev Credits & Developer Tools',
-        'Legal & IP Mentorship Guidance',
-        'Merit Certificate & Trophy',
-      ],
-    },
-  ];
+const PRIZES_DATA = [
+  {
+    place: '1ST PRIZE',
+    badge: 'Winner',
+    amount: '₹50,000',
+    subtitle: 'Direct Cash Grant',
+    badgeStyle: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+    borderStyle: 'border-amber-500/40 hover:border-amber-400',
+    perks: [
+      'Direct Entry to Angel Investor Demo Day',
+      '₹5,00,000 AWS & Cloud Credits',
+      '3 Months Incubation Support',
+      '1-on-1 VC Mentorship Sessions',
+    ],
+  },
+  {
+    place: '2ND PRIZE',
+    badge: '1st Runner Up',
+    amount: '₹30,000',
+    subtitle: 'Direct Cash Grant',
+    badgeStyle: 'bg-slate-300/20 text-slate-200 border border-slate-300/30',
+    borderStyle: 'border-slate-500/40 hover:border-slate-400',
+    perks: [
+      'VC Office Hours & Pitch Audit',
+      '₹2,50,000 Cloud & Tool Credits',
+      'Co-Working Space Pass (1 Month)',
+      'E-Cell Growth Network Access',
+    ],
+  },
+  {
+    place: '3RD PRIZE',
+    badge: '2nd Runner Up',
+    amount: '₹20,000',
+    subtitle: 'Direct Cash Grant',
+    badgeStyle: 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
+    borderStyle: 'border-orange-500/40 hover:border-orange-400',
+    perks: [
+      'Founder Strategy & Go-To-Market Session',
+      '₹1,00,000 Dev Credits & Developer Tools',
+      'Legal & IP Mentorship Guidance',
+      'Merit Certificate & Trophy',
+    ],
+  },
+];
+
+export const PrizesSection = memo(function PrizesSection() {
+  const prizes = PRIZES_DATA;
 
   return (
     <section id="prizes" className="py-12 border-t border-slate-800/80">
@@ -136,4 +139,4 @@ export function PrizesSection() {
       </div>
     </section>
   );
-}
+});

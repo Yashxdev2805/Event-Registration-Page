@@ -1,35 +1,36 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { ChevronDown, HelpCircle, CheckCircle2 } from 'lucide-react';
 
-export function FAQSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+const FAQS_DATA = [
+  {
+    q: 'Who can register for the E-Cell Start-up Pitch Competition?',
+    a: 'Any college student (Undergraduate, Postgraduate, or Diploma) with a valid college identity card can participate. Inter-college teams and cross-disciplinary teams are fully permitted.',
+  },
+  {
+    q: 'Can solo founders participate, or is a team required?',
+    a: 'Both solo founders and teams of up to 4 members are eligible. Select your team size (1 to 4) when filling out the registration form.',
+  },
+  {
+    q: 'Do I need a working product/MVP to apply?',
+    a: 'No. Ideas at all stages — from early-stage concept and wireframes to functional prototypes and active revenue — are evaluated fairly based on problem depth, market potential, and feasibility.',
+  },
+  {
+    q: 'What is the pitch format for the Grand Finale?',
+    a: 'Shortlisted teams present a 3-minute live pitch followed by 2 minutes of Q&A with the investor panel. Pitch decks must be concise (recommended 5–7 slides).',
+  },
+  {
+    q: 'Is there any registration fee?',
+    a: 'No. Registration is 100% free for all students.',
+  },
+  {
+    q: 'When will the shortlisted teams be announced?',
+    a: 'Stage 1 screening results will be announced on April 4 via email and the official E-Cell notice channels.',
+  },
+];
 
-  const faqs = [
-    {
-      q: 'Who can register for the E-Cell Start-up Pitch Competition?',
-      a: 'Any college student (Undergraduate, Postgraduate, or Diploma) with a valid college identity card can participate. Inter-college teams and cross-disciplinary teams are fully permitted.',
-    },
-    {
-      q: 'Can solo founders participate, or is a team required?',
-      a: 'Both solo founders and teams of up to 4 members are eligible. Select your team size (1 to 4) when filling out the registration form.',
-    },
-    {
-      q: 'Do I need a working product/MVP to apply?',
-      a: 'No. Ideas at all stages — from early-stage concept and wireframes to functional prototypes and active revenue — are evaluated fairly based on problem depth, market potential, and feasibility.',
-    },
-    {
-      q: 'What is the pitch format for the Grand Finale?',
-      a: 'Shortlisted teams present a 3-minute live pitch followed by 2 minutes of Q&A with the investor panel. Pitch decks must be concise (recommended 5–7 slides).',
-    },
-    {
-      q: 'Is there any registration fee?',
-      a: 'No. Registration is 100% free for all students.',
-    },
-    {
-      q: 'When will the shortlisted teams be announced?',
-      a: 'Stage 1 screening results will be announced on April 4 via email and the official E-Cell notice channels.',
-    },
-  ];
+export const FAQSection = memo(function FAQSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const faqs = FAQS_DATA;
 
   return (
     <section id="faqs" className="py-12 border-t border-slate-800/80">
@@ -114,4 +115,4 @@ export function FAQSection() {
       </div>
     </section>
   );
-}
+});

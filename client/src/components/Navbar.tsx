@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 interface NavbarProps {
@@ -9,7 +9,7 @@ interface NavbarProps {
   onScrollToFaqs: () => void;
 }
 
-export function Navbar({
+export const Navbar = memo(function Navbar({
   onScrollToForm,
   onScrollToTracks,
   onScrollToPrizes,
@@ -22,7 +22,7 @@ export function Navbar({
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -94,4 +94,4 @@ export function Navbar({
       </div>
     </nav>
   );
-}
+});

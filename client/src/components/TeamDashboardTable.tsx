@@ -128,23 +128,56 @@ export function TeamDashboardTable({ teams, onFlipToRegister }: TeamDashboardTab
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [activeModalTeam, setActiveModalTeam] = useState<RegisteredTeamRecord | null>(null);
 
-  // Filtered Teams
+  // Single-Pass O(N) Metrics Calculation
+  const metrics = useMemo(() => {
+    let shortlisted = 0;
+    let finalists = 0;
+    for (let i = 0; i < teams.length; i++) {
+      const status = teams[i].status;
+      if (status === 'Demo Day Finalist') {
+        finalists++;
+        shortlisted++;
+      } else if (status === 'Shortlisted for Mentorship') {
+        shortlisted++;
+      }
+    }
+    return {
+      total: teams.length,
+      shortlisted,
+      finalists,
+    };
+  }, [teams]);
+
+  // Optimized Filtered Teams Query with O(1) Fast-Path
   const filteredTeams = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    const isAllTracks = selectedTrack === 'all';
+    const isAllStatuses = selectedStatus === 'all';
+
+    // Fast path: no filters active
+    if (!query && isAllTracks && isAllStatuses) {
+      return teams;
+    }
+
     return teams.filter((team) => {
-      const matchesSearch =
-        team.teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        team.leaderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        team.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        team.trackLabel.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesTrack = isAllTracks || team.trackId === selectedTrack;
+      if (!matchesTrack) return false;
 
-      const matchesTrack = selectedTrack === 'all' || team.trackId === selectedTrack;
-      const matchesStatus = selectedStatus === 'all' || team.status === selectedStatus;
+      const matchesStatus = isAllStatuses || team.status === selectedStatus;
+      if (!matchesStatus) return false;
 
-      return matchesSearch && matchesTrack && matchesStatus;
+      if (!query) return true;
+
+      return (
+        team.teamName.toLowerCase().includes(query) ||
+        team.leaderName.toLowerCase().includes(query) ||
+        team.id.toLowerCase().includes(query) ||
+        team.trackLabel.toLowerCase().includes(query)
+      );
     });
   }, [teams, searchTerm, selectedTrack, selectedStatus]);
 
-  // Status Styling
+  // Status Styling Helper
   const getStatusBadge = (status: RegisteredTeamRecord['status']) => {
     switch (status) {
       case 'Demo Day Finalist':
@@ -203,23 +236,19 @@ export function TeamDashboardTable({ teams, onFlipToRegister }: TeamDashboardTab
         </button>
       </div>
 
-      {/* ── Key Portal Metrics Strip ── */}
+      {/* ── Key Portal Metrics Strip (O(1) from memoized single pass) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="ecell-card p-3 bg-bg-card/70">
           <p className="text-[10px] font-mono uppercase text-slate-400">Total Applications</p>
-          <p className="text-xl font-bold text-white font-heading mt-0.5">{teams.length}</p>
+          <p className="text-xl font-bold text-white font-heading mt-0.5">{metrics.total}</p>
         </div>
         <div className="ecell-card p-3 bg-bg-card/70">
           <p className="text-[10px] font-mono uppercase text-slate-400">Shortlisted for Mentorship</p>
-          <p className="text-xl font-bold text-emerald-400 font-heading mt-0.5">
-            {teams.filter((t) => t.status === 'Shortlisted for Mentorship' || t.status === 'Demo Day Finalist').length}
-          </p>
+          <p className="text-xl font-bold text-emerald-400 font-heading mt-0.5">{metrics.shortlisted}</p>
         </div>
         <div className="ecell-card p-3 bg-bg-card/70">
           <p className="text-[10px] font-mono uppercase text-slate-400">Demo Day Finalists</p>
-          <p className="text-xl font-bold text-purple-400 font-heading mt-0.5">
-            {teams.filter((t) => t.status === 'Demo Day Finalist').length}
-          </p>
+          <p className="text-xl font-bold text-purple-400 font-heading mt-0.5">{metrics.finalists}</p>
         </div>
         <div className="ecell-card p-3 bg-bg-card/70">
           <p className="text-[10px] font-mono uppercase text-slate-400">Current Stage</p>
@@ -249,7 +278,7 @@ export function TeamDashboardTable({ teams, onFlipToRegister }: TeamDashboardTab
             aria-label="Filter teams by competition track"
             className="ecell-input text-xs cursor-pointer"
           >
-            <option value="all">All Tracks (6)</option>
+            <option value="all">All Tracks ({TRACK_OPTIONS.length})</option>
             {TRACK_OPTIONS.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.label}

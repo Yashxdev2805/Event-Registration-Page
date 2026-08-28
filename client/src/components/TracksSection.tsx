@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import {
   Bot,
   Coins,
@@ -6,12 +6,14 @@ import {
   HeartPulse,
   GraduationCap,
   Sparkles,
+  Lightbulb,
   ChevronDown,
   ChevronUp,
   CheckCircle2,
   Cpu,
   Target,
   ArrowRight,
+  type LucideIcon,
 } from 'lucide-react';
 import { TRACK_OPTIONS, type TrackDetail } from '../schemas/registration.schema';
 
@@ -20,21 +22,23 @@ interface TracksSectionProps {
   onSelectTrack?: (trackId: string) => void;
 }
 
-export function TracksSection({ selectedTrack, onSelectTrack }: TracksSectionProps) {
-  const [expandedTrackId, setExpandedTrackId] = useState<string | null>('ai-saas');
+// Module-level static mapping — 0 allocation per render cycle
+const ICON_MAP: Readonly<Record<string, LucideIcon>> = Object.freeze({
+  'ai-saas': Bot,
+  'fintech-web3': Coins,
+  'cleantech': Leaf,
+  'healthtech': HeartPulse,
+  'consumer-edtech': GraduationCap,
+  'open-innovation': Sparkles,
+  'other': Lightbulb,
+});
 
-  const iconMap: Record<string, typeof Bot> = {
-    'ai-saas': Bot,
-    'fintech-web3': Coins,
-    'cleantech': Leaf,
-    'healthtech': HeartPulse,
-    'consumer-edtech': GraduationCap,
-    'open-innovation': Sparkles,
-  };
+export const TracksSection = memo(function TracksSection({ selectedTrack, onSelectTrack }: TracksSectionProps) {
+  const [expandedTrackId, setExpandedTrackId] = useState<string | null>('ai-saas');
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpandedTrackId(expandedTrackId === id ? null : id);
+    setExpandedTrackId((prev) => (prev === id ? null : id));
   };
 
   return (
@@ -54,7 +58,7 @@ export function TracksSection({ selectedTrack, onSelectTrack }: TracksSectionPro
             Competition Tracks & Problem Statements
           </h3>
           <p className="text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
-            Explore the 6 specialized startup verticals. Review the challenge themes, key technologies, and judge evaluation criteria to align your submission.
+            Explore the {TRACK_OPTIONS.length} specialized startup verticals. Review the challenge themes, key technologies, and judge evaluation criteria to align your submission.
           </p>
         </div>
 
@@ -66,7 +70,7 @@ export function TracksSection({ selectedTrack, onSelectTrack }: TracksSectionPro
       {/* Tracks Grid with Rich Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {TRACK_OPTIONS.map((track: TrackDetail) => {
-          const Icon = iconMap[track.id] || Sparkles;
+          const Icon = ICON_MAP[track.id] || Sparkles;
           const isSelected = selectedTrack === track.id;
           const isExpanded = expandedTrackId === track.id;
 
@@ -196,4 +200,4 @@ export function TracksSection({ selectedTrack, onSelectTrack }: TracksSectionPro
       </div>
     </section>
   );
-}
+});

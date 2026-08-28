@@ -1,40 +1,43 @@
+import { memo } from 'react';
 import { Calendar, CheckCircle2, Presentation, Sparkles } from 'lucide-react';
 
-export function TimelineSection() {
-  const stages = [
-    {
-      step: '01',
-      title: 'Online Registration',
-      date: 'March 1 – March 30',
-      desc: 'Submit your startup idea, team details, and optional pitch deck online.',
-      icon: Calendar,
-      status: 'Active',
-    },
-    {
-      step: '02',
-      title: 'Idea Screening & Shortlist',
-      date: 'April 2 – April 4',
-      desc: 'Expert panel evaluates submissions based on innovation, market fit, and feasibility.',
-      icon: CheckCircle2,
-      status: 'Upcoming',
-    },
-    {
-      step: '03',
-      title: 'Mentorship & Deck Polish',
-      date: 'April 6 – April 8',
-      desc: 'Shortlisted teams get 1-on-1 feedback from experienced founders and VCs.',
-      icon: Sparkles,
-      status: 'Upcoming',
-    },
-    {
-      step: '04',
-      title: 'Grand Finale Pitch',
-      date: 'April 12, 2026',
-      desc: 'Live 3-minute pitch + Q&A in front of the jury at the Campus Auditorium.',
-      icon: Presentation,
-      status: 'Finale',
-    },
-  ];
+const TIMELINE_STAGES = [
+  {
+    step: '01',
+    title: 'Online Registration',
+    date: 'March 1 – March 30',
+    desc: 'Submit your startup idea, team details, and optional pitch deck online.',
+    icon: Calendar,
+    status: 'Active',
+  },
+  {
+    step: '02',
+    title: 'Idea Screening & Shortlist',
+    date: 'April 2 – April 4',
+    desc: 'Expert panel evaluates submissions based on innovation, market fit, and feasibility.',
+    icon: CheckCircle2,
+    status: 'Upcoming',
+  },
+  {
+    step: '03',
+    title: 'Mentorship & Deck Polish',
+    date: 'April 6 – April 8',
+    desc: 'Shortlisted teams get 1-on-1 feedback from experienced founders and VCs.',
+    icon: Sparkles,
+    status: 'Upcoming',
+  },
+  {
+    step: '04',
+    title: 'Grand Finale Pitch',
+    date: 'April 12, 2026',
+    desc: 'Live 3-minute pitch + Q&A in front of the jury at the Campus Auditorium.',
+    icon: Presentation,
+    status: 'Finale',
+  },
+];
+
+export const TimelineSection = memo(function TimelineSection() {
+  const stages = TIMELINE_STAGES;
 
   return (
     <section id="timeline" className="py-12 border-t border-slate-800/80">
@@ -105,4 +108,4 @@ export function TimelineSection() {
       </div>
     </section>
   );
-}
+});
