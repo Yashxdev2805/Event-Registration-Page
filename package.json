@@ -1,0 +1,24 @@
+{
+  "name": "ecell-pitch-arena-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build:server": "npm --prefix server run build",
+    "build:client": "npm --prefix client run build",
+    "build": "npm --prefix server run build",
+    "start": "npm --prefix server start",
+    "test:checkpoints": "npm --prefix server run dev:checkpoints",
+    "test:firestore": "npm --prefix server run dev:firestore",
+    "test:security": "npm --prefix server run dev:security"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
