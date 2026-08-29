@@ -74,8 +74,6 @@ export function FlipPortalModal({
     return { registeredEmails: emails, registeredPhones: phones };
   }, [teams]);
 
-  const isFlipped = activeTab === 'dashboard';
-
   return (
     <div id="registration-portal" className="py-12 relative z-10 scroll-mt-20">
       {/* ── Section Title & Tab Controls ── */}
@@ -125,21 +123,10 @@ export function FlipPortalModal({
         </div>
       </div>
 
-      {/* ── 3D Transitional Flip Book Container ── */}
-      <div className="perspective-1200 w-full min-h-[600px]">
-        <div
-          className={`w-full transition-all duration-700 transform-style-3d relative ${
-            isFlipped ? 'rotate-y-180' : ''
-          }`}
-        >
-          {/* ══════════════════════════════════════════════════════════
-              FRONT SIDE: REGISTRATION FORM (BOOK PAGE 1)
-             ══════════════════════════════════════════════════════════ */}
-          <div
-            className={`w-full ecell-card p-6 sm:p-8 border-slate-800 bg-[#0d111a] shadow-2xl backface-hidden ${
-              isFlipped ? 'pointer-events-none' : ''
-            }`}
-          >
+      {/* ── Interactive Registration & Dashboard Portal Container ── */}
+      <div className="w-full">
+        {activeTab === 'register' ? (
+          <div className="w-full ecell-card p-6 sm:p-8 border-slate-800 bg-[#0d111a] shadow-2xl animate-fade-in">
             {/* Top Bar of Registration Book */}
             <div className="mb-6 pb-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
@@ -174,21 +161,14 @@ export function FlipPortalModal({
               registeredPhones={registeredPhones}
             />
           </div>
-
-          {/* ══════════════════════════════════════════════════════════
-              BACK SIDE: TEAM DASHBOARD TABLE (BOOK PAGE 2)
-             ══════════════════════════════════════════════════════════ */}
-          <div
-            className={`w-full ecell-card p-6 sm:p-8 border-slate-800 bg-[#0d111a] shadow-2xl backface-hidden rotate-y-180 absolute top-0 left-0 ${
-              !isFlipped ? 'pointer-events-none' : ''
-            }`}
-          >
+        ) : (
+          <div className="w-full ecell-card p-6 sm:p-8 border-slate-800 bg-[#0d111a] shadow-2xl animate-fade-in">
             <TeamDashboardTable
               teams={teams}
               onFlipToRegister={() => setActiveTab('register')}
             />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

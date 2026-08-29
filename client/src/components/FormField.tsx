@@ -87,9 +87,9 @@ export function FormField({
       {/* Input container — V2: shake-error on validation failure */}
       <div className={`relative ${hasError ? 'shake-error' : ''}`} key={hasError ? shakeKey : 'stable'}>
         {type === 'tel' && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none text-xs font-mono text-slate-400 border-r border-slate-700 pr-2">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none text-xs font-mono text-slate-400 border-r border-slate-700 pr-2.5 z-10 select-none">
             <span>🇮🇳</span>
-            <span className="text-slate-300 font-semibold">+91</span>
+            <span className="text-slate-200 font-bold">+91</span>
           </div>
         )}
 
@@ -125,7 +125,8 @@ export function FormField({
                 ? 'name'
                 : undefined
             }
-            className={`ecell-input ${type === 'tel' ? 'pl-16' : ''} ${
+            style={type === 'tel' ? { paddingLeft: '4.85rem' } : undefined}
+            className={`ecell-input ${type === 'tel' ? '!pl-20' : ''} ${
               hasError
                 ? 'border-red-500/60 focus:border-red-500 focus:ring-red-500/20'
                 : ''

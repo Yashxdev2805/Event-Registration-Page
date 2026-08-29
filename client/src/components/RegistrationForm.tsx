@@ -574,13 +574,22 @@ export function RegistrationForm({
                       <span>Member {memberNum} Contact Number (Optional)</span>
                       <span className="text-[10px] text-slate-500">For emergency updates</span>
                     </label>
-                    <input
-                      type="tel"
-                      placeholder="e.g. 9812345678"
-                      disabled={isSubmitting}
-                      className="ecell-input"
-                      {...register(`members.${idx}.phone` as const)}
-                    />
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none text-xs font-mono text-slate-400 border-r border-slate-700 pr-2.5 z-10 select-none">
+                        <span>🇮🇳</span>
+                        <span className="text-slate-200 font-bold">+91</span>
+                      </div>
+                      <input
+                        type="tel"
+                        placeholder="9812345678"
+                        disabled={isSubmitting}
+                        style={{ paddingLeft: '4.85rem' }}
+                        className={`ecell-input !pl-20 ${
+                          memberError?.phone ? 'border-red-500/60 focus:border-red-500' : ''
+                        }`}
+                        {...register(`members.${idx}.phone` as const)}
+                      />
+                    </div>
                   </div>
                 </div>
               );

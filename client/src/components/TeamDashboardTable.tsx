@@ -27,21 +27,40 @@ export interface RegisteredTeamRecord {
   score?: number;
 }
 
+export const maskEmail = (email?: string): string => {
+  if (!email) return '—';
+  if (email.includes('****')) return email;
+  const parts = email.split('@');
+  if (parts.length !== 2) return '—';
+  const name = parts[0];
+  const domain = parts[1];
+  const maskedName = name.length <= 2 ? `${name[0]}****` : `${name.slice(0, 2)}****`;
+  return `${maskedName}@${domain}`;
+};
+
+export const maskPhone = (phone?: string): string => {
+  if (!phone) return '—';
+  const clean = phone.replace(/\D/g, '');
+  if (clean.length < 4) return '🔒 Protected';
+  const last4 = clean.slice(-4);
+  return `+91 ******${last4}`;
+};
+
 export const INITIAL_TEAMS_DATA: RegisteredTeamRecord[] = [
   {
     id: 'EC26-A8K2M',
     teamName: 'NovaSpark AI',
     leaderName: 'Priya Sharma',
-    leaderEmail: 'priya.s@uietkuk.ac.in',
-    leaderPhone: '+91 9876543210',
+    leaderEmail: 'pr****@uietkuk.ac.in',
+    leaderPhone: '+91 ******3210',
     teamSize: '3',
     trackId: 'ai-saas',
     trackLabel: 'AI & GenAI / SaaS',
     idea: 'Autonomous multi-agent customer support orchestrator for SME e-commerce merchants with self-healing resolution flows.',
     pitchDeckUrl: 'https://drive.google.com/file/d/novaspark-pitch',
     members: [
-      { name: 'Ananya Gupta', email: 'ananya.g@uietkuk.ac.in', phone: '9811223344' },
-      { name: 'Rohan Mehta', email: 'rohan.m@uietkuk.ac.in', phone: '9822334455' },
+      { name: 'Ananya Gupta', email: 'an****@uietkuk.ac.in', phone: '******3344' },
+      { name: 'Rohan Mehta', email: 'ro****@uietkuk.ac.in', phone: '******4455' },
     ],
     submittedAt: '2026-03-24',
     status: 'Shortlisted for Mentorship',
@@ -51,16 +70,16 @@ export const INITIAL_TEAMS_DATA: RegisteredTeamRecord[] = [
     id: 'EC26-Z9P4L',
     teamName: 'EcoCharge Dynamics',
     leaderName: 'Kavya Patel',
-    leaderEmail: 'kavya.patel@uietkuk.ac.in',
-    leaderPhone: '+91 9876543210',
+    leaderEmail: 'ka****@uietkuk.ac.in',
+    leaderPhone: '+91 ******3210',
     teamSize: '3',
     trackId: 'cleantech',
     trackLabel: 'Climate & Sustainability',
     idea: 'Smart solar-assisted EV battery swapping station network with automated thermal balancing and predictive demand dispatching across urban hubs.',
     pitchDeckUrl: 'https://drive.google.com/file/d/ecocharge-pitch/view',
     members: [
-      { name: 'Rohan Verma', email: 'rohan.v@uietkuk.ac.in', phone: '9812345678' },
-      { name: 'Sneha Rao', email: 'sneha.rao@uietkuk.ac.in', phone: '' },
+      { name: 'Rohan Verma', email: 'ro****@uietkuk.ac.in', phone: '******5678' },
+      { name: 'Sneha Rao', email: 'sn****@uietkuk.ac.in', phone: '' },
     ],
     submittedAt: '2026-03-25',
     status: 'Shortlisted for Mentorship',
@@ -70,14 +89,14 @@ export const INITIAL_TEAMS_DATA: RegisteredTeamRecord[] = [
     id: 'EC26-K3W7V',
     teamName: 'FinFlow Web3',
     leaderName: 'Aditya Roy',
-    leaderEmail: 'aditya.roy@college.edu.in',
-    leaderPhone: '+91 9988776655',
+    leaderEmail: 'ad****@college.edu.in',
+    leaderPhone: '+91 ******6655',
     teamSize: '2',
     trackId: 'fintech-web3',
     trackLabel: 'FinTech & Web3',
     idea: 'Decentralized invoice discounting marketplace for MSME exporters with instant rupee settlement and automated lien verification.',
     pitchDeckUrl: 'https://canva.com/design/finflow-pitch-deck',
-    members: [{ name: 'Deepak Sen', email: 'deepak.sen@college.edu.in' }],
+    members: [{ name: 'Deepak Sen', email: 'de****@college.edu.in' }],
     submittedAt: '2026-03-22',
     status: 'Under Review',
     score: 81,
@@ -86,17 +105,17 @@ export const INITIAL_TEAMS_DATA: RegisteredTeamRecord[] = [
     id: 'EC26-M5X9Q',
     teamName: 'NeuroPulse BioMed',
     leaderName: 'Dr. Tanya Malik',
-    leaderEmail: 'tanya.malik@medtech.org',
-    leaderPhone: '+91 9711223344',
+    leaderEmail: 'ta****@medtech.org',
+    leaderPhone: '+91 ******3344',
     teamSize: '4',
     trackId: 'healthtech',
     trackLabel: 'HealthTech & Bio',
     idea: 'Low-cost portable EEG headset paired with edge CNN algorithms for non-invasive rapid stroke detection in rural ambulance triage.',
     pitchDeckUrl: 'https://notion.so/neuropulse-pitch-docket',
     members: [
-      { name: 'Vikas Kumar', email: 'vikas.k@medtech.org' },
-      { name: 'Aarav Nair', email: 'aarav.n@medtech.org' },
-      { name: 'Meera Iyer', email: 'meera.i@medtech.org' },
+      { name: 'Vikas Kumar', email: 'vi****@medtech.org' },
+      { name: 'Aarav Nair', email: 'aa****@medtech.org' },
+      { name: 'Meera Iyer', email: 'me****@medtech.org' },
     ],
     submittedAt: '2026-03-20',
     status: 'Demo Day Finalist',
@@ -458,18 +477,26 @@ export function TeamDashboardTable({ teams, onFlipToRegister }: TeamDashboardTab
                 </div>
               )}
 
-              {/* Team Roster */}
+              {/* Team Roster with strict PII privacy masking */}
               <div>
-                <h5 className="font-bold text-white uppercase text-[11px] font-mono mb-2 flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-amber-400" />
-                  Registered Team Roster ({activeModalTeam.teamSize} Members):
-                </h5>
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="font-bold text-white uppercase text-[11px] font-mono flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5 text-amber-400" />
+                    Registered Team Roster ({activeModalTeam.teamSize} Members):
+                  </h5>
+                  <span className="text-[10px] font-mono text-emerald-400/80 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
+                    <span>🔒</span>
+                    <span>Contact Info Protected</span>
+                  </span>
+                </div>
                 <div className="space-y-2">
                   <div className="p-2.5 rounded-lg bg-bg-input border border-white/5 flex items-center justify-between">
                     <div>
                       <span className="font-bold text-white block">{activeModalTeam.leaderName}</span>
-                      <span className="text-[11px] text-slate-400">
-                        {activeModalTeam.leaderEmail} • {activeModalTeam.leaderPhone}
+                      <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                        <span>{maskEmail(activeModalTeam.leaderEmail)}</span>
+                        <span>•</span>
+                        <span>{maskPhone(activeModalTeam.leaderPhone)}</span>
                       </span>
                     </div>
                     <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400">
@@ -484,8 +511,14 @@ export function TeamDashboardTable({ teams, onFlipToRegister }: TeamDashboardTab
                     >
                       <div>
                         <span className="font-semibold text-slate-200 block">{m.name}</span>
-                        <span className="text-[11px] text-slate-400">
-                          {m.email} {m.phone ? `• ${m.phone}` : ''}
+                        <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                          <span>{maskEmail(m.email)}</span>
+                          {m.phone && (
+                            <>
+                              <span>•</span>
+                              <span>{maskPhone(m.phone)}</span>
+                            </>
+                          )}
                         </span>
                       </div>
                       <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white/5 text-slate-400">
