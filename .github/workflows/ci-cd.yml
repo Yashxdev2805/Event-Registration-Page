@@ -42,11 +42,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies & native linux bindings
+        run: |
+          npm install
+          npm --prefix client install @rolldown/binding-linux-x64-gnu@1.2.6
 
       - name: TypeScript & Build Check — Client
         run: npm --prefix client run build
@@ -70,8 +70,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
         run: npm install
@@ -95,8 +93,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
         run: npm install
@@ -129,11 +125,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies & native linux bindings
+        run: |
+          npm install
+          npm --prefix client install @rolldown/binding-linux-x64-gnu@1.2.6
 
       - name: Build Full Stack (Client & Server)
         run: npm run build
