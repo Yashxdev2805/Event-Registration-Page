@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies & native linux bindings
         run: |
           npm install
-          npm --prefix client install @rolldown/binding-linux-x64-gnu@1.2.6 lightningcss-linux-x64-gnu@1.32.0
+          npm --prefix client install @rolldown/binding-linux-x64-gnu@1.2.6 lightningcss-linux-x64-gnu@1.32.0 @tailwindcss/oxide-linux-x64-gnu@4.3.3
 
       - name: TypeScript & Build Check — Client
         run: npm --prefix client run build
@@ -129,7 +129,7 @@ jobs:
       - name: Install dependencies & native linux bindings
         run: |
           npm install
-          npm --prefix client install @rolldown/binding-linux-x64-gnu@1.2.6 lightningcss-linux-x64-gnu@1.32.0
+          npm --prefix client install @rolldown/binding-linux-x64-gnu@1.2.6 lightningcss-linux-x64-gnu@1.32.0 @tailwindcss/oxide-linux-x64-gnu@4.3.3
 
       - name: Build Full Stack (Client & Server)
         run: npm run build
