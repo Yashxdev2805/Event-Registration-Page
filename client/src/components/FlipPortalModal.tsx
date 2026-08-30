@@ -80,7 +80,7 @@ export function FlipPortalModal({
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-6 h-0.5 bg-gradient-to-r from-blue-500 to-[#e8702a] rounded-full" />
+            <span className="w-6 h-0.5 bg-linear-to-r from-blue-500 to-[#e8702a] rounded-full" />
             <span className="text-xs font-bold tracking-wider text-blue-400 uppercase font-mono">
               Official Competition Portal
             </span>

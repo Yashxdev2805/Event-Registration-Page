@@ -346,7 +346,7 @@ export function TeamDashboardTable({ teams, onFlipToRegister }: TeamDashboardTab
                 </tr>
               ) : (
                 filteredTeams.map((team) => (
-                  <tr key={team.id} className="hover:bg-white/[0.02] transition-colors">
+                  <tr key={team.id} className="hover:bg-white/5 transition-colors">
                     {/* Startup & ID */}
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-white font-heading text-sm">{team.teamName}</div>

@@ -126,7 +126,7 @@ export function FormField({
                 : undefined
             }
             style={type === 'tel' ? { paddingLeft: '4.85rem' } : undefined}
-            className={`ecell-input ${type === 'tel' ? '!pl-20' : ''} ${
+            className={`ecell-input ${type === 'tel' ? 'pl-20!' : ''} ${
               hasError
                 ? 'border-red-500/60 focus:border-red-500 focus:ring-red-500/20'
                 : ''

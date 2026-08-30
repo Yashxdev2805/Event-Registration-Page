@@ -584,7 +584,7 @@ export function RegistrationForm({
                         placeholder="9812345678"
                         disabled={isSubmitting}
                         style={{ paddingLeft: '4.85rem' }}
-                        className={`ecell-input !pl-20 ${
+                        className={`ecell-input pl-20! ${
                           memberError?.phone ? 'border-red-500/60 focus:border-red-500' : ''
                         }`}
                         {...register(`members.${idx}.phone` as const)}
