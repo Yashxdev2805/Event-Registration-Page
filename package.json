@@ -12,11 +12,11 @@
     "dev:client": "npm --prefix client run dev",
     "build:server": "npm --prefix server run build",
     "build:client": "npm --prefix client run build",
-    "build": "npm --prefix server run build",
+    "build": "npm --prefix client run build && npm --prefix server run build",
     "start": "npm --prefix server start",
-    "test:checkpoints": "npm --prefix server run dev:checkpoints",
-    "test:firestore": "npm --prefix server run dev:firestore",
-    "test:security": "npm --prefix server run dev:security"
+    "test:checkpoints": "node server/test-10-checkpoints.js",
+    "test:firestore": "node server/test-phase3-firestore.js",
+    "test:security": "node server/test-phase4-security.js"
   },
   "engines": {
     "node": ">=20.0.0"
